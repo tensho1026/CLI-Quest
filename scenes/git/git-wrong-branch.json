@@ -6,11 +6,14 @@
   "description": "An authentication feature was committed directly on main by mistake.",
   "mission": "Move the authentication commit onto a feature/* branch and restore main to its original commit. Keep the feature change in Git history.",
   "success": "main is restored and the change is safely reachable from a feature branch.",
+  "solution":["git branch feature/auth", "git reset --hard HEAD~1"],
+  "lesson":{"what_happened":"The commit was valid but the main branch pointer included it by mistake.","other_solutions":["Branch then reset main","Cherry-pick onto a feature branch then restore main"],"be_careful":"Create a reference to the commit before moving main so the work stays reachable."},
   "setup": {"type": "git_wrong_branch"},
   "validation": {"type": "git_wrong_branch"},
   "hints": [
     "Inspect the graph and branch pointers with git log and git branch.",
     "Create the feature branch while the mistaken commit is still checked out.",
     "After preserving the commit on feature/auth, switch to main and move main back one commit."
-  ]
+  ],
+  "translations":{"ja":{"title":"Mainへ誤commit","description":"authentication featureを誤ってmainへcommitしました。","mission":"変更をfeature/* branchへ移しmainを元のcommitへ戻してください。","success":"mainを復元し変更をfeature branchに安全に残しました。","hints":["git logとgit branchでpointerを確認します。","誤commitをcheckout中にfeature branchを作ります。","変更を保存後mainへ戻り一つ前へ移動します。"],"lesson":{"what_happened":"commit自体は正常ですがmain branch pointerが誤って含んでいました。","other_solutions":["branchを作ってmainをreset","featureへcherry-pickしてmainを復元"],"be_careful":"mainを動かす前にcommitへの参照を作りましょう。"}}}
 }

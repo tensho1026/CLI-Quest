@@ -1,0 +1,12 @@
+{
+  "id":"git-conflict", "title":"Merge Conflict", "category":"git", "difficulty":"normal",
+  "description":"Merging feature/tuning into main left app.conf with unresolved conflict markers.",
+  "mission":"Resolve the conflict, keep timeout=30 and feature=true, and complete the merge commit.",
+  "success":"The merge is complete with both required settings.",
+  "solution":["Edit app.conf and remove conflict markers", "git add app.conf && git commit"],
+  "lesson":{"what_happened":"Both branches edited the same lines and Git needed a human decision.","other_solutions":["Edit manually","Use git checkout --ours/--theirs then adjust"],"be_careful":"Always inspect the final file and run tests before committing a resolution."},
+  "setup":{"type":"git_conflict"},
+  "validation":{"type":"all","validators":[{"type":"git_no_conflicts"},{"type":"git_clean"},{"type":"git_file_contains","path":"app.conf","value":"timeout=30"},{"type":"git_file_contains","path":"app.conf","value":"feature=true"}]},
+  "hints":["Run git status and open app.conf.","Remove <<<<<<<, ======= and >>>>>>> after choosing final values.","Stage the resolved file and complete the merge commit."],
+  "translations":{"ja":{"title":"Merge Conflict","description":"feature/tuningのmergeでapp.confに未解決conflictが残りました。","mission":"conflictを解消しtimeout=30とfeature=trueを残してmerge commitを完了してください。","success":"必要な設定を保ったままmergeを完了しました。","lesson":{"what_happened":"両branchが同じ行を変更し、Gitだけでは選べませんでした。","other_solutions":["手動編集","ours/theirsを選んで調整"],"be_careful":"解消後のfile内容を確認してtestしてからcommitしましょう。"}}}
+}

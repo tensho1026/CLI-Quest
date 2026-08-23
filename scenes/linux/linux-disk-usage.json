@@ -6,6 +6,8 @@
   "description": "One application directory is consuming much more disk space than the others.",
   "mission": "Identify the largest top-level directory and write its name into answer.txt.",
   "success": "You identified cache as the largest directory.",
+  "solution":["du -sh */ | sort -h"],
+  "lesson":{"what_happened":"Directory-level disk usage showed cache was much larger than its peers.","other_solutions":["du -sh */","du -d 1 where supported"],"be_careful":"df reports filesystem capacity; du reports file and directory usage."},
   "setup": {
     "type": "filesystem",
     "files": [
@@ -21,5 +23,6 @@
     "Compare directory sizes from the workspace root.",
     "du summarizes disk usage; -h makes sizes easier to read.",
     "Try: du -sh */"
-  ]
+  ],
+  "translations":{"ja":{"title":"Disk使用量調査","description":"一つのapplication directoryが他より大量のdiskを使っています。","mission":"最大のtop-level directory名をanswer.txtへ書いてください。","success":"cacheが最大だと特定しました。","hints":["Workspace rootでdirectory sizeを比較します。","du -hで読みやすいsizeを表示できます。","du -sh */を試してください。"],"lesson":{"what_happened":"directory単位のdisk usageからcacheが突出していると分かりました。","other_solutions":["du -sh */","対応環境のdu -d 1"],"be_careful":"dfはfilesystem全体、duはfile/directoryの使用量です。"}}}
 }

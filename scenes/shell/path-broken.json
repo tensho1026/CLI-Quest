@@ -1,0 +1,16 @@
+{
+  "id":"path-broken", "title":"Command Not Found", "category":"shell", "difficulty":"normal",
+  "description":"deployctl exists in the workspace, but scripts expect it under local/bin and report command not found.",
+  "mission":"Make an executable deployctl available at local/bin/deployctl without changing the original tool.",
+  "success":"The expected executable path is available.",
+  "solution":["ln -s ../../opt/tools/deployctl local/bin/deployctl", "cp opt/tools/deployctl local/bin/deployctl"],
+  "lesson":{"what_happened":"The executable existed but was outside the path expected by the script.","other_solutions":["Create a symbolic link","Copy the executable"],"be_careful":"A shell PATH change only affects the relevant process and its children."},
+  "setup":{"type":"filesystem","files":[
+    {"path":"opt/tools/deployctl","mode":448,"content":"#!/bin/sh\necho 'deployctl ready'\n"},
+    {"path":"local/bin/.keep","content":""},
+    {"path":"check-path.sh","mode":448,"content":"#!/bin/sh\nPATH=\"$(pwd)/local/bin:$PATH\" deployctl\n"}
+  ]},
+  "validation":{"type":"all","validators":[{"type":"file_exists","path":"local/bin/deployctl"},{"type":"executable","path":"local/bin/deployctl"}]},
+  "hints":["Find where deployctl currently exists.","local/bin can contain either the executable or a link to it.","Research ln -s and relative symbolic-link paths."],
+  "translations":{"ja":{"title":"Command Not Found","description":"deployctlは存在しますがscriptが期待するlocal/binになく、command not foundになります。","mission":"元のtoolを変更せずlocal/bin/deployctlとして実行可能にしてください。","success":"期待されるpathからcommandを実行できる状態になりました。","lesson":{"what_happened":"実行fileはありましたがscriptが探すpathの外にありました。","other_solutions":["symbolic linkを作る","実行fileをcopyする"],"be_careful":"PATH変更は通常、そのprocessとchild processにだけ影響します。"}}}
+}

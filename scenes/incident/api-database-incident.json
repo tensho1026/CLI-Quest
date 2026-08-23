@@ -1,0 +1,16 @@
+{
+  "id":"api-database-incident", "title":"API Database Incident", "category":"incident", "difficulty":"hard",
+  "description":"The API at http://127.0.0.1:18085/health returns 500. Logs suggest a configuration problem.",
+  "mission":"Investigate the log and configuration, repair the database URL, then confirm a healthy response from /health.",
+  "success":"The configuration is repaired and the API health check succeeds.",
+  "solution":["grep ERROR logs/api.log", "edit service.conf", "curl -i http://127.0.0.1:18085/health"],
+  "lesson":{"what_happened":"The health failure was downstream of an invalid database endpoint in configuration.","other_solutions":["Compare with service.conf.example","Trace the error from HTTP to logs to configuration"],"be_careful":"Do not expose real database credentials while debugging."},
+  "setup":{"type":"http_server","port":18085,"mode":"incident","files":[
+    {"path":"service.conf","content":"DATABASE_URL=postgres://old-db.internal/app\n"},
+    {"path":"service.conf.example","content":"DATABASE_URL=postgres://db.internal/app\n"},
+    {"path":"logs/api.log","content":"INFO api starting on :18085\nERROR database connection failed host=old-db.internal\nWARN health endpoint will return 500\n"}
+  ]},
+  "validation":{"type":"all","validators":[{"type":"file_contains","path":"service.conf","value":"DATABASE_URL=postgres://db.internal/app"},{"type":"marker_exists","path":".incident-resolved"}]},
+  "hints":["Start with the HTTP response and logs/api.log.","Compare service.conf with the provided example.","After fixing the URL, request /health again."],
+  "translations":{"ja":{"title":"API Database Incident","description":"/healthが500を返し、logは設定問題を示しています。","mission":"logと設定を調査しdatabase URLを修復して/healthの正常応答を確認してください。","success":"設定を修復しAPI health checkに成功しました。","lesson":{"what_happened":"health failureの原因は誤ったdatabase endpoint設定でした。","other_solutions":["example設定と比較","HTTPからlog、設定へ順に追跡"],"be_careful":"debug中も本物のdatabase credentialを公開しないでください。"}}}
+}

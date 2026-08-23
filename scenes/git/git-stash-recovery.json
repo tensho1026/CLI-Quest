@@ -1,0 +1,12 @@
+{
+  "id":"git-stash-recovery", "title":"Recover the Stash", "category":"git", "difficulty":"normal",
+  "description":"An emergency incident report disappeared from the working tree after it was stashed.",
+  "mission":"Find the stash and restore incident-report.txt into the working tree.",
+  "success":"The incident report has been restored from the stash.",
+  "solution":["git stash list", "git stash apply or git stash pop"],
+  "lesson":{"what_happened":"Git stored the uncommitted file in a stash instead of deleting it.","other_solutions":["git stash apply","git stash pop","git restore from stash ref"],"be_careful":"pop removes a stash only after a successful application."},
+  "setup":{"type":"git_stash_recovery"},
+  "validation":{"type":"file_contains","path":"incident-report.txt","value":"INCIDENT_ROOT_CAUSE=connection-pool-exhausted"},
+  "hints":["Inspect Git's stash list.","Show the stash contents before applying it.","Use git stash apply or git stash pop."],
+  "translations":{"ja":{"title":"Stashから復旧","description":"stashされた緊急incident reportがworking treeから消えています。","mission":"stashを探しincident-report.txtをworking treeへ復旧してください。","success":"incident reportをstashから復旧しました。","lesson":{"what_happened":"未commit fileは削除ではなくstashに保存されていました。","other_solutions":["git stash apply","git stash pop","stash refからrestore"],"be_careful":"popは適用成功後にstashを削除します。"}}}
+}

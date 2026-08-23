@@ -24,54 +24,182 @@ func Check(def scene.Definition, active *progress.ActiveScene) Result {
 	if active == nil || active.SceneID != def.ID {
 		return Result{Message: "The active scene does not match this definition."}
 	}
-	switch def.Validation.Type {
+	result := checkRule(def.Validation, def, active)
+	if result.Clear && result.Message == "" {
+		result.Message = def.Success
+	}
+	return result
+}
+
+func checkRule(rule scene.Validation, def scene.Definition, active *progress.ActiveScene) Result {
+	switch rule.Type {
+	case "all":
+		for _, nested := range rule.Validators {
+			result := checkRule(nested, def, active)
+			if !result.Clear {
+				return result
+			}
+		}
+		return Result{Clear: true}
+	case "any":
+		var messages []string
+		for _, nested := range rule.Validators {
+			result := checkRule(nested, def, active)
+			if result.Clear {
+				return Result{Clear: true}
+			}
+			if result.Message != "" {
+				messages = append(messages, result.Message)
+			}
+		}
+		return Result{Message: strings.Join(messages, " ")}
 	case "executable":
-		info, err := os.Stat(filepath.Join(active.Workspace, def.Validation.Path))
+		path, err := safePath(active.Workspace, rule.Path)
 		if err != nil {
-			return Result{Message: fmt.Sprintf("%s does not exist.", def.Validation.Path)}
+			return Result{Message: fmt.Sprintf("%s is missing or unsafe.", rule.Path)}
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return Result{Message: fmt.Sprintf("%s does not exist.", rule.Path)}
 		}
 		if info.Mode().IsRegular() && info.Mode().Perm()&0o111 != 0 {
-			return Result{Clear: true, Message: def.Success}
+			return Result{Clear: true}
 		}
-		return Result{Message: fmt.Sprintf("%s is still not executable.", def.Validation.Path)}
+		return Result{Message: fmt.Sprintf("%s is still not executable.", rule.Path)}
+	case "file_exists":
+		path, err := safePath(active.Workspace, rule.Path)
+		if err == nil {
+			if info, statErr := os.Stat(path); statErr == nil && !info.IsDir() {
+				return Result{Clear: true}
+			}
+		}
+		return Result{Message: fmt.Sprintf("%s does not exist yet.", rule.Path)}
+	case "file_mode":
+		path, err := safePath(active.Workspace, rule.Path)
+		if err == nil {
+			if info, statErr := os.Stat(path); statErr == nil && fmt.Sprintf("%04o", info.Mode().Perm()) == rule.Value {
+				return Result{Clear: true}
+			}
+		}
+		return Result{Message: fmt.Sprintf("%s does not have mode %s yet.", rule.Path, rule.Value)}
 	case "file_contains":
-		data, err := os.ReadFile(filepath.Join(active.Workspace, def.Validation.Path))
-		if err == nil && bytes.Contains(data, []byte(def.Validation.Value)) {
-			return Result{Clear: true, Message: def.Success}
+		path, err := safePath(active.Workspace, rule.Path)
+		if err == nil {
+			data, readErr := os.ReadFile(path)
+			if readErr == nil && bytes.Contains(data, []byte(rule.Value)) {
+				return Result{Clear: true}
+			}
 		}
-		return Result{Message: fmt.Sprintf("%s does not contain the required answer yet.", def.Validation.Path)}
+		return Result{Message: fmt.Sprintf("%s does not contain the required answer yet.", rule.Path)}
+	case "file_not_contains":
+		path, err := safePath(active.Workspace, rule.Path)
+		if err == nil {
+			data, readErr := os.ReadFile(path)
+			if readErr == nil && !bytes.Contains(data, []byte(rule.Value)) {
+				return Result{Clear: true}
+			}
+		}
+		return Result{Message: fmt.Sprintf("%s still contains the unwanted value.", rule.Path)}
+	case "git_branch":
+		if _, err := gitOutput(active.Workspace, "rev-parse", "--verify", "refs/heads/"+rule.Name); err == nil {
+			return Result{Clear: true}
+		}
+		return Result{Message: fmt.Sprintf("Git branch %s does not exist.", rule.Name)}
 	case "git_wrong_branch":
 		return checkGitWrongBranch(def, active)
 	case "git_clean":
-		cmd := exec.Command("git", "diff", "--quiet", "HEAD", "--", def.Validation.Path)
+		if err := safeWorkspaceRoot(active.Workspace); err != nil {
+			return Result{Message: "The Git workspace path is unsafe."}
+		}
+		args := []string{"diff", "--quiet", "HEAD"}
+		if rule.Path != "" {
+			args = append(args, "--", rule.Path)
+		}
+		cmd := exec.Command("git", args...)
 		cmd.Dir = active.Workspace
 		if err := cmd.Run(); err == nil {
-			return Result{Clear: true, Message: def.Success}
+			return Result{Clear: true}
 		}
-		return Result{Message: fmt.Sprintf("%s still differs from the committed version.", def.Validation.Path)}
+		return Result{Message: fmt.Sprintf("%s still differs from the committed version.", rule.Path)}
+	case "git_no_conflicts":
+		output, err := gitOutput(active.Workspace, "ls-files", "-u")
+		if err == nil && strings.TrimSpace(output) == "" {
+			return Result{Clear: true}
+		}
+		return Result{Message: "The repository still has unresolved merge conflicts."}
+	case "git_file_contains":
+		content, err := gitOutput(active.Workspace, "show", "HEAD:"+rule.Path)
+		if err == nil && strings.Contains(content, rule.Value) {
+			return Result{Clear: true}
+		}
+		return Result{Message: fmt.Sprintf("HEAD does not contain the expected content in %s.", rule.Path)}
 	case "git_commit_contains":
-		return checkReachableGitContent(def, active)
+		copy := def
+		copy.Validation = rule
+		return checkReachableGitContent(copy, active)
+	case "git_bisect_answer":
+		path, err := safePath(active.Workspace, rule.Path)
+		if err == nil {
+			data, readErr := os.ReadFile(path)
+			if readErr == nil && strings.Contains(string(data), active.Resources["culprit_commit"]) {
+				return Result{Clear: true}
+			}
+		}
+		return Result{Message: "The answer does not identify the first bad commit."}
 	case "process_stopped":
 		pid, err := strconv.Atoi(active.Resources["pid"])
 		if err == nil && !processAlive(pid) {
-			return Result{Clear: true, Message: def.Success}
+			return Result{Clear: true}
 		}
 		return Result{Message: "The CLI Quest process is still running. Identify its PID and stop it."}
 	case "port_available":
 		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", def.Setup.Port))
 		if err == nil {
 			listener.Close()
-			return Result{Clear: true, Message: def.Success}
+			return Result{Clear: true}
 		}
 		return Result{Message: fmt.Sprintf("Port %d is still in use.", def.Setup.Port)}
 	case "marker_exists":
-		if _, err := os.Stat(filepath.Join(active.Workspace, def.Validation.Path)); err == nil {
-			return Result{Clear: true, Message: def.Success}
+		path, err := safePath(active.Workspace, rule.Path)
+		if err == nil {
+			if _, statErr := os.Stat(path); statErr == nil {
+				return Result{Clear: true}
+			}
 		}
 		return Result{Message: "The server has not received the required request yet."}
 	default:
 		return Result{Message: fmt.Sprintf("Unsupported validator %q.", def.Validation.Type)}
 	}
+}
+
+func safePath(workspace, relative string) (string, error) {
+	root, err := filepath.Abs(workspace)
+	if err != nil {
+		return "", err
+	}
+	rootInfo, err := os.Lstat(root)
+	if err != nil || rootInfo.Mode()&os.ModeSymlink != 0 || !rootInfo.IsDir() {
+		return "", fmt.Errorf("unsafe workspace")
+	}
+	if filepath.IsAbs(relative) {
+		return "", fmt.Errorf("absolute path")
+	}
+	resolvedRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
+	joined := filepath.Join(root, filepath.Clean(relative))
+	if joined != root && !strings.HasPrefix(joined, root+string(filepath.Separator)) {
+		return "", fmt.Errorf("path escapes workspace")
+	}
+	resolved, err := filepath.EvalSymlinks(joined)
+	if err != nil {
+		return "", err
+	}
+	if resolved != resolvedRoot && !strings.HasPrefix(resolved, resolvedRoot+string(filepath.Separator)) {
+		return "", fmt.Errorf("symlink escapes workspace")
+	}
+	return resolved, nil
 }
 
 func checkGitWrongBranch(def scene.Definition, active *progress.ActiveScene) Result {
@@ -111,10 +239,28 @@ func checkReachableGitContent(def scene.Definition, active *progress.ActiveScene
 }
 
 func gitOutput(dir string, args ...string) (string, error) {
+	if err := safeWorkspaceRoot(dir); err != nil {
+		return "", err
+	}
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
 	output, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(output)), err
+}
+
+func safeWorkspaceRoot(workspace string) error {
+	root, err := filepath.Abs(workspace)
+	if err != nil {
+		return err
+	}
+	info, err := os.Lstat(root)
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+		return fmt.Errorf("workspace root is not a real directory")
+	}
+	return nil
 }
 
 func processAlive(pid int) bool {

@@ -6,6 +6,8 @@
   "description": "A CLI Quest worker is repeatedly consuming CPU in the background.",
   "mission": "Use process inspection tools to find the worker associated with this workspace and terminate it.",
   "success": "The runaway worker has stopped.",
+  "solution":["ps aux | grep __runaway", "kill <confirmed-PID>"],
+  "lesson":{"what_happened":"A background helper repeatedly performed work and consumed CPU.","other_solutions":["ps sorting by CPU","top/htop then ps verification"],"be_careful":"Verify the full command and workspace before terminating it."},
   "setup": {
     "type": "runaway_process",
     "files": [
@@ -17,5 +19,6 @@
     "Inspect running processes and their CPU usage.",
     "ps aux can show both the command and CPU column. Look for __runaway.",
     "Confirm the process command contains this workspace path before using kill on its PID."
-  ]
+  ],
+  "translations":{"ja":{"title":"Runaway Process","description":"CLI Quest workerがbackgroundでCPUを消費しています。","mission":"processを特定して停止してください。","success":"runaway workerを停止しました。","hints":["CPU usageとcommandを確認します。","ps auxで__runawayを探します。","Workspace pathを含むことを確認してkillします。"],"lesson":{"what_happened":"background helperが処理を繰り返しCPUを消費していました。","other_solutions":["psをCPU順に表示","top/htop後にpsで確認"],"be_careful":"停止前にfull commandとWorkspaceを確認しましょう。"}}}
 }

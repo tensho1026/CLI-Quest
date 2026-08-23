@@ -6,6 +6,8 @@
   "description": "A production service is failing, but its configuration file is buried somewhere in this archive.",
   "mission": "Find config.production.toml and write its relative path into answer.txt.",
   "success": "You found the production configuration file.",
+  "solution":["find . -name 'config.production.toml' > answer.txt"],
+  "lesson":{"what_happened":"Recursive name-based search found the deeply nested configuration.","other_solutions":["find","Shell recursive globbing when enabled"],"be_careful":"Quote wildcard patterns so the shell does not expand them too early."},
   "setup": {
     "type": "filesystem",
     "files": [
@@ -21,5 +23,6 @@
     "Search recursively rather than opening every directory.",
     "find accepts a starting directory and a name pattern.",
     "A useful form is: find . -name 'config.production.toml'"
-  ]
+  ],
+  "translations":{"ja":{"title":"設定file探索","description":"production設定fileがarchiveの深い場所にあります。","mission":"config.production.tomlを探しrelative pathをanswer.txtへ書いてください。","success":"production設定fileを見つけました。","hints":["各directoryを手作業で開かずrecursiveに探します。","findは開始directoryとname patternを指定できます。","find . -name 'config.production.toml'を試してください。"],"lesson":{"what_happened":"nameによるrecursive searchで深い設定fileを見つけました。","other_solutions":["find","recursive glob"],"be_careful":"wildcardはshellに先に展開されないようquoteしましょう。"}}}
 }

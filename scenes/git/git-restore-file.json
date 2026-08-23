@@ -6,11 +6,14 @@
   "description": "config.ini has accidental local edits. Other workspace files must be left alone.",
   "mission": "Restore only config.ini to the version recorded in HEAD.",
   "success": "config.ini matches the committed production configuration again.",
+  "solution":["git restore config.ini", "git checkout -- config.ini"],
+  "lesson":{"what_happened":"Only the working-tree copy changed; HEAD still contained the correct configuration.","other_solutions":["git restore","Legacy git checkout -- path"],"be_careful":"Restoring discards uncommitted edits to the selected path."},
   "setup": {"type": "git_restore_file"},
   "validation": {"type": "git_clean", "path": "config.ini"},
   "hints": [
     "Use git status and git diff to inspect the local change.",
     "Git can restore one path without resetting the whole repository.",
     "Research: git restore config.ini"
-  ]
+  ],
+  "translations":{"ja":{"title":"特定fileだけ復元","description":"config.iniだけに誤ったlocal変更があります。","mission":"config.iniだけをHEADに記録された内容へ戻してください。","success":"config.iniをproduction設定へ戻しました。","hints":["git statusとgit diffで変更を確認します。","repository全体をresetせず一つのpathだけ復元できます。","git restore config.iniを調べてください。"],"lesson":{"what_happened":"working treeだけが変わりHEADには正しい設定が残っていました。","other_solutions":["git restore","git checkout -- path"],"be_careful":"restoreは選択pathの未commit変更を破棄します。"}}}
 }

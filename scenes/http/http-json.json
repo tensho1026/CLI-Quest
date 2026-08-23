@@ -1,0 +1,12 @@
+{
+  "id":"http-json", "title":"Extract JSON Data", "category":"http", "difficulty":"normal",
+  "description":"A local API at http://127.0.0.1:18082/users returns a JSON user list.",
+  "mission":"Request the API, extract the admin user's name, and write it into answer.txt.",
+  "success":"You requested and extracted the required JSON value.",
+  "solution":["curl -s http://127.0.0.1:18082/users | jq -r '.users[] | select(.role == \"admin\") | .name' > answer.txt"],
+  "lesson":{"what_happened":"The HTTP response was structured JSON, so selecting by role was safer than text matching.","other_solutions":["jq filter","A language JSON parser"],"be_careful":"Check HTTP errors before assuming the response has the expected schema."},
+  "setup":{"type":"http_server","port":18082,"mode":"json","files":[{"path":"answer.txt"}]},
+  "validation":{"type":"all","validators":[{"type":"marker_exists","path":".json-requested"},{"type":"file_contains","path":"answer.txt","value":"Mina"}]},
+  "hints":["Request /users and inspect the JSON shape.","jq can iterate .users[] and select by .role.","Select role admin, then print .name with -r."],
+  "translations":{"ja":{"title":"JSON data抽出","description":"local APIの/usersがuser一覧をJSONで返します。","mission":"APIへrequestしadmin userのnameをanswer.txtへ書いてください。","success":"必要なJSON値をrequestして抽出できました。","lesson":{"what_happened":"structured JSONなのでroleによる選択がtext検索より安全でした。","other_solutions":["jq filter","各言語のJSON parser"],"be_careful":"期待schemaを仮定する前にHTTP errorを確認しましょう。"}}}
+}

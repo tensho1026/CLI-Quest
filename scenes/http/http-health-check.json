@@ -6,6 +6,8 @@
   "description": "A local API is running at http://127.0.0.1:18080, but its status is unknown.",
   "mission": "Send a GET request to /health and confirm that the API reports a healthy status.",
   "success": "The health endpoint was queried successfully.",
+  "solution":["curl http://127.0.0.1:18080/health"],
+  "lesson":{"what_happened":"A direct health request confirmed the local API was serving successfully.","other_solutions":["curl","Any HTTP client sending GET"],"be_careful":"A healthy process is not always a healthy dependency; inspect the response body too."},
   "setup": {
     "type": "http_server",
     "port": 18080,
@@ -17,5 +19,6 @@
     "The endpoint accepts an HTTP GET request.",
     "curl can print an HTTP response in the terminal.",
     "Try: curl http://127.0.0.1:18080/health"
-  ]
+  ],
+  "translations":{"ja":{"title":"API Health Check","description":"local APIのstatusが不明です。","mission":"/healthへGET requestしhealthy statusを確認してください。","success":"health endpointへのrequestに成功しました。","hints":["endpointはHTTP GETを受け付けます。","curlでresponseをterminalに表示できます。","curl http://127.0.0.1:18080/healthを試します。"],"lesson":{"what_happened":"health requestでlocal APIが応答することを確認しました。","other_solutions":["curl","任意のHTTP client"],"be_careful":"process稼働だけでdependency正常とは限らないためbodyも確認しましょう。"}}}
 }

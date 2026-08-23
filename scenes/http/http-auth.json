@@ -6,6 +6,8 @@
   "description": "GET http://127.0.0.1:18081/profile returns 401 Unauthorized without credentials.",
   "mission": "Read the provided credentials and make a successful request to /profile with the required Authorization header.",
   "success": "The API accepted an authenticated profile request.",
+  "solution":["curl -H 'Authorization: Bearer cliquest-secret' http://127.0.0.1:18081/profile"],
+  "lesson":{"what_happened":"The endpoint required a Bearer token in the Authorization header.","other_solutions":["curl -H","Another HTTP client with the same header"],"be_careful":"Tokens can leak through shell history and process listings; use secure input in real systems."},
   "setup": {
     "type": "http_server",
     "port": 18081,
@@ -20,5 +22,6 @@
     "Inspect credentials.txt and include both the scheme and token.",
     "curl uses -H to add a request header.",
     "The header format is: Authorization: Bearer <token>"
-  ]
+  ],
+  "translations":{"ja":{"title":"認証付きRequest","description":"credentialなしの/profileは401 Unauthorizedを返します。","mission":"provided credentialを読みAuthorization header付きrequestを成功させてください。","success":"認証付きprofile requestに成功しました。","hints":["credentials.txtのschemeとtokenを確認します。","curl -Hでrequest headerを追加できます。","Authorization: Bearer <token>形式です。"],"lesson":{"what_happened":"endpointはAuthorization headerのBearer tokenを必要としていました。","other_solutions":["curl -H","他のHTTP clientで同じheader"],"be_careful":"実環境ではshell historyやprocess表示からtokenが漏れない入力方法を使いましょう。"}}}
 }

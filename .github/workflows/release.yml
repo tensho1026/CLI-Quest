@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test
+        run: go test ./...
+      - name: Build release archives
+        shell: bash
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist staging
+          for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64; do
+            os="${target%/*}"
+            arch="${target#*/}"
+            name="cliquest_${VERSION}_${os}_${arch}"
+            mkdir -p "staging/${name}"
+            GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 go build \
+              -trimpath \
+              -ldflags="-s -w -X github.com/tensho1026/CLI-Quest/internal/cli.Version=${VERSION}" \
+              -o "staging/${name}/cliquest" ./cmd/cliquest
+            cp README.md LICENSE "staging/${name}/"
+            tar -C staging -czf "dist/${name}.tar.gz" "$name"
+          done
+          cd dist
+          sha256sum *.tar.gz > checksums.txt
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist/* --verify-tag --generate-notes --title "CLI Quest ${{ github.ref_name }}"

@@ -13,6 +13,15 @@ func TestCatalogContainsMVPCategories(t *testing.T) {
 		if len(def.Hints) < 3 {
 			t.Errorf("scene %s has only %d hints", def.ID, len(def.Hints))
 		}
+		if len(def.Solution) == 0 {
+			t.Errorf("scene %s has no solution examples", def.ID)
+		}
+		if def.Lesson.WhatHappened == "" || def.Lesson.BeCareful == "" {
+			t.Errorf("scene %s has incomplete lesson", def.ID)
+		}
+		if _, ok := def.Translations["ja"]; !ok {
+			t.Errorf("scene %s has no Japanese translation", def.ID)
+		}
 	}
 	minimums := map[string]int{"linux": 4, "git": 3, "process": 2, "http": 2}
 	for category, minimum := range minimums {
@@ -20,8 +29,8 @@ func TestCatalogContainsMVPCategories(t *testing.T) {
 			t.Errorf("category %s has %d scenes; want at least %d", category, counts[category], minimum)
 		}
 	}
-	if len(catalog.All()) < 11 {
-		t.Fatalf("catalog has %d scenes; want at least 11", len(catalog.All()))
+	if len(catalog.All()) < 24 {
+		t.Fatalf("catalog has %d scenes; want at least 24", len(catalog.All()))
 	}
 }
 

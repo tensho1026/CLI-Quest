@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -71,6 +72,12 @@ func (m *Manager) Setup(def scene.Definition) (map[string]string, error) {
 		err = setupGitRestoreFile(workspace)
 	case "git_lost_commit":
 		err = setupGitLostCommit(workspace)
+	case "git_conflict":
+		err = setupGitConflict(workspace)
+	case "git_stash_recovery":
+		err = setupGitStashRecovery(workspace)
+	case "git_bisect":
+		err = setupGitBisect(workspace, resources)
 	case "port_conflict":
 		err = m.startHelper(workspace, resources, "__hold-port", strconv.Itoa(def.Setup.Port))
 	case "runaway_process":
@@ -251,6 +258,95 @@ func setupGitLostCommit(dir string) error {
 	return err
 }
 
+func commitAll(dir, message string) error {
+	if _, err := runGit(dir, "add", "."); err != nil {
+		return err
+	}
+	_, err := runGit(dir, "commit", "-m", message)
+	return err
+}
+
+func setupGitConflict(dir string) error {
+	if err := initGit(dir); err != nil {
+		return err
+	}
+	if err := writeFile(filepath.Join(dir, "app.conf"), "environment=production\ntimeout=10\nfeature=false\n"); err != nil {
+		return err
+	}
+	if err := commitAll(dir, "add application config"); err != nil {
+		return err
+	}
+	if _, err := runGit(dir, "switch", "-c", "feature/tuning"); err != nil {
+		return err
+	}
+	if err := writeFile(filepath.Join(dir, "app.conf"), "environment=production\ntimeout=30\nfeature=true\n"); err != nil {
+		return err
+	}
+	if err := commitAll(dir, "enable tuned feature"); err != nil {
+		return err
+	}
+	if _, err := runGit(dir, "switch", "main"); err != nil {
+		return err
+	}
+	if err := writeFile(filepath.Join(dir, "app.conf"), "environment=production\ntimeout=20\nfeature=false\n"); err != nil {
+		return err
+	}
+	if err := commitAll(dir, "adjust production timeout"); err != nil {
+		return err
+	}
+	_, mergeErr := runGit(dir, "merge", "feature/tuning")
+	if mergeErr == nil {
+		return fmt.Errorf("expected merge conflict was not created")
+	}
+	return nil
+}
+
+func setupGitStashRecovery(dir string) error {
+	if err := initGit(dir); err != nil {
+		return err
+	}
+	if err := writeFile(filepath.Join(dir, "README.md"), "Operations repository.\n"); err != nil {
+		return err
+	}
+	if err := commitAll(dir, "initial commit"); err != nil {
+		return err
+	}
+	if err := writeFile(filepath.Join(dir, "incident-report.txt"), "INCIDENT_ROOT_CAUSE=connection-pool-exhausted\n"); err != nil {
+		return err
+	}
+	_, err := runGit(dir, "stash", "push", "-u", "-m", "emergency investigation")
+	return err
+}
+
+func setupGitBisect(dir string, resources map[string]string) error {
+	if err := initGit(dir); err != nil {
+		return err
+	}
+	versions := []struct{ message, content string }{
+		{"working release 1", "VERSION=1\nCACHE=true\n"},
+		{"working release 2", "VERSION=2\nCACHE=true\nTIMEOUT=30\n"},
+		{"introduce regression", "VERSION=3\nCACHE=true\nTIMEOUT=30\nBUG_TRIGGER=true\n"},
+		{"add metrics", "VERSION=4\nCACHE=true\nTIMEOUT=30\nBUG_TRIGGER=true\nMETRICS=true\n"},
+		{"update docs", "VERSION=5\nCACHE=true\nTIMEOUT=30\nBUG_TRIGGER=true\nMETRICS=true\nDOCS=true\n"},
+	}
+	for index, version := range versions {
+		if err := writeFile(filepath.Join(dir, "app.env"), version.content); err != nil {
+			return err
+		}
+		if err := commitAll(dir, version.message); err != nil {
+			return err
+		}
+		if index == 2 {
+			hash, err := runGit(dir, "rev-parse", "HEAD")
+			if err != nil {
+				return err
+			}
+			resources["culprit_commit"] = hash
+		}
+	}
+	return writeFile(filepath.Join(dir, "answer.txt"), "")
+}
+
 func (m *Manager) startHelper(workspace string, resources map[string]string, helper string, args ...string) error {
 	tokenBytes := make([]byte, 16)
 	if _, err := rand.Read(tokenBytes); err != nil {
@@ -278,8 +374,18 @@ func (m *Manager) startHelper(workspace string, resources map[string]string, hel
 	resources["pid"] = strconv.Itoa(cmd.Process.Pid)
 	resources["token"] = token
 	resources["helper"] = helper
+	resources["workspace"] = workspace
 	for deadline := time.Now().Add(3 * time.Second); time.Now().Before(deadline); {
 		if _, err := os.Stat(ready); err == nil {
+			data, encodeErr := json.Marshal(resources)
+			if encodeErr != nil {
+				Cleanup(resources)
+				return encodeErr
+			}
+			if writeErr := os.WriteFile(filepath.Join(workspace, ".cliquest-resource.json"), data, 0o600); writeErr != nil {
+				Cleanup(resources)
+				return writeErr
+			}
 			return nil
 		}
 		select {
@@ -294,33 +400,96 @@ func (m *Manager) startHelper(workspace string, resources map[string]string, hel
 	return fmt.Errorf("scene helper did not become ready; see %s", logPath)
 }
 
-func Cleanup(resources map[string]string) {
+func Cleanup(resources map[string]string) bool {
 	pid, err := strconv.Atoi(resources["pid"])
 	if err != nil || pid <= 1 || resources["token"] == "" {
-		return
+		return false
 	}
-	if !processCommandContains(pid, resources["token"]) {
-		return
+	if !processCommandContains(pid, resources["token"], resources["workspace"]) {
+		return false
 	}
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return
+		return false
 	}
 	_ = process.Signal(syscall.SIGTERM)
 	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); {
 		if !processAlive(pid) {
-			return
+			removeResourceRegistry(resources)
+			return true
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
-	if processCommandContains(pid, resources["token"]) {
+	if processCommandContains(pid, resources["token"], resources["workspace"]) {
 		_ = process.Kill()
+	}
+	removeResourceRegistry(resources)
+	return true
+}
+
+func removeResourceRegistry(resources map[string]string) {
+	if resources["workspace"] != "" {
+		_ = os.Remove(filepath.Join(resources["workspace"], ".cliquest-resource.json"))
 	}
 }
 
-func processCommandContains(pid int, token string) bool {
+func processCommandContains(pid int, values ...string) bool {
 	output, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "command=").Output()
-	return err == nil && bytes.Contains(output, []byte(token))
+	if err != nil {
+		return false
+	}
+	for _, value := range values {
+		if value != "" && !bytes.Contains(output, []byte(value)) {
+			return false
+		}
+	}
+	return true
+}
+
+type CleanupReport struct{ Stopped, Stale int }
+
+func (m *Manager) CleanupStale(activeWorkspace string) (CleanupReport, error) {
+	report := CleanupReport{}
+	entries, err := os.ReadDir(m.root)
+	if errors.Is(err, os.ErrNotExist) {
+		return report, nil
+	}
+	if err != nil {
+		return report, err
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		workspacePath := filepath.Join(m.root, entry.Name())
+		registry := filepath.Join(workspacePath, ".cliquest-resource.json")
+		data, readErr := os.ReadFile(registry)
+		if errors.Is(readErr, os.ErrNotExist) {
+			continue
+		}
+		if readErr != nil {
+			return report, readErr
+		}
+		resources := map[string]string{}
+		if json.Unmarshal(data, &resources) != nil || resources["workspace"] != workspacePath {
+			_ = os.Remove(registry)
+			report.Stale++
+			continue
+		}
+		pid, _ := strconv.Atoi(resources["pid"])
+		alive := processCommandContains(pid, resources["token"], workspacePath)
+		if workspacePath != activeWorkspace && alive {
+			if Cleanup(resources) {
+				report.Stopped++
+			}
+			continue
+		}
+		if !alive {
+			_ = os.Remove(registry)
+			report.Stale++
+		}
+	}
+	return report, nil
 }
 
 func processAlive(pid int) bool {

@@ -1,4 +1,6 @@
 /cliquest
 /coverage.out
+/dist/
+/staging/
 *.test
 .DS_Store

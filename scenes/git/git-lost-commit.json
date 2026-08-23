@@ -6,11 +6,14 @@
   "description": "An important commit containing recovery-note.txt disappeared after a reset.",
   "mission": "Find the lost commit and make it reachable from a branch or the current branch again.",
   "success": "The recovery note is present in reachable Git history again.",
+  "solution":["git reflog", "git branch recovered <lost-commit>"],
+  "lesson":{"what_happened":"Reset moved the branch pointer, but the reflog still recorded the previous commit.","other_solutions":["Create a branch at the reflog commit","Cherry-pick the lost commit"],"be_careful":"Unreachable commits can eventually be garbage-collected, so recover promptly."},
   "setup": {"type": "git_lost_commit"},
   "validation": {"type": "git_commit_contains", "path": "recovery-note.txt", "value": "CLIQUEST_RECOVERED_7F3A"},
   "hints": [
     "Git often retains a record of recent HEAD movements.",
     "Inspect the reflog to find the commit before the reset.",
     "Create a branch at the recovered commit, or cherry-pick that commit onto main."
-  ]
+  ],
+  "translations":{"ja":{"title":"消えたCommit","description":"reset後にrecovery-note.txtを含む重要commitが見えなくなりました。","mission":"lost commitを探しbranchまたはcurrent branchから到達可能にしてください。","success":"recovery noteをGit historyへ復旧しました。","hints":["Gitは最近のHEAD移動を記録しています。","reflogでreset前のcommitを探します。","lost commitにbranchを作るかmainへcherry-pickします。"],"lesson":{"what_happened":"resetはbranch pointerを動かしましたがreflogに以前のcommitが残っていました。","other_solutions":["reflog commitへbranch作成","lost commitをcherry-pick"],"be_careful":"unreachable commitは将来GCされるため早く復旧しましょう。"}}}
 }

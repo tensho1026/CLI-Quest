@@ -1,0 +1,15 @@
+{
+  "id": "shell-pipeline", "title": "Pipeline Report", "category": "shell", "difficulty": "normal",
+  "description": "Access logs contain repeated HTTP status codes that need to be summarized.",
+  "mission": "Count the 500 responses and write the number into answer.txt.",
+  "success": "You produced the correct error count.",
+  "solution": ["grep ' 500 ' access.log | wc -l", "awk '$9 == 500 { count++ } END { print count }' access.log"],
+  "lesson": {"what_happened": "A pipeline reduced a large log to the records and aggregate you needed.", "other_solutions": ["grep + wc", "awk alone"], "be_careful": "Match the status-code field, not an arbitrary 500 appearing elsewhere."},
+  "setup": {"type": "filesystem", "files": [
+    {"path": "answer.txt", "content": ""},
+    {"path": "access.log", "content": "10.0.0.1 GET /health 200 12ms\n10.0.0.2 GET /api 500 83ms\n10.0.0.3 POST /login 401 20ms\n10.0.0.4 GET /api 500 91ms\n10.0.0.5 GET / 200 8ms\n10.0.0.6 GET /api 500 75ms\n"}
+  ]},
+  "validation": {"type": "file_contains", "path": "answer.txt", "value": "3"},
+  "hints": ["Filter the 500 lines before counting.", "grep can feed its output to another command with |.", "Try combining grep and wc -l."],
+  "translations": {"ja": {"title":"パイプライン集計", "description":"アクセスログに含まれるHTTP status codeを集計する必要があります。", "mission":"500 responseの件数を数え、answer.txtへ数値を書いてください。", "success":"正しいerror件数を集計できました。", "lesson":{"what_happened":"pipeで必要なlogだけを絞り込み、集計しました。", "other_solutions":["grepとwc", "awkだけで集計"], "be_careful":"別fieldに現れる500ではなくstatus code列を確認しましょう。"}}}
+}

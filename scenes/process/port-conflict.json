@@ -6,6 +6,8 @@
   "description": "$ ./api\nlisten tcp 127.0.0.1:8080: bind: address already in use",
   "mission": "Identify the CLI Quest process listening on TCP port 8080 and stop it so the port becomes available.",
   "success": "Port 8080 is available.",
+  "solution":["lsof -nP -iTCP:8080 -sTCP:LISTEN", "ps -p <PID> -o command=", "kill <confirmed-PID>"],
+  "lesson":{"what_happened":"A CLI Quest helper already held the address required by the API.","other_solutions":["lsof then kill","ss then ps and kill on Linux"],"be_careful":"Never kill a PID until its command and ownership are confirmed."},
   "setup": {
     "type": "port_conflict",
     "port": 8080,
@@ -19,5 +21,6 @@
     "Find which process is listening on TCP port 8080.",
     "On macOS and many Linux systems, lsof -iTCP:8080 -sTCP:LISTEN shows the PID.",
     "Inspect the PID, confirm it is the cliquest helper, then terminate that PID with kill."
-  ]
+  ],
+  "translations":{"ja":{"title":"Port Conflict","description":"./apiがaddress already in useで起動できません。","mission":"TCP port 8080をlistenするCLI Quest processを特定し停止してください。","success":"Port 8080を解放しました。","hints":["TCP 8080をlistenするprocessを探します。","lsof -iTCP:8080 -sTCP:LISTENでPIDを確認できます。","CLI Quest helperだと確認してからkillします。"],"lesson":{"what_happened":"APIに必要なaddressをCLI Quest helperが既に使用していました。","other_solutions":["lsofとkill","Linuxのss、ps、kill"],"be_careful":"commandとowner確認前にPIDをkillしないでください。"}}}
 }

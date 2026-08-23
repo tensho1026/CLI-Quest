@@ -1,0 +1,12 @@
+{
+  "id":"network-dns", "title":"Wrong Host Mapping", "category":"network", "difficulty":"normal",
+  "description":"A workspace-local hosts override maps api.internal to an obsolete address, causing connection failures.",
+  "mission":"Use the provided DNS evidence to correct api.internal in etc/hosts.override to 127.0.0.1.",
+  "success":"The workspace host override now uses the correct address.",
+  "solution":["Edit etc/hosts.override and replace 192.0.2.44 with 127.0.0.1"],
+  "lesson":{"what_happened":"A local host override took precedence over the expected service address.","other_solutions":["Remove the stale override if normal DNS is available"],"be_careful":"This Scene never changes the system /etc/hosts file."},
+  "setup":{"type":"filesystem","files":[{"path":"etc/hosts.override","content":"192.0.2.44 api.internal\n"},{"path":"dns-evidence.txt","content":"authoritative answer: api.internal A 127.0.0.1\n"}]},
+  "validation":{"type":"all","validators":[{"type":"file_contains","path":"etc/hosts.override","value":"127.0.0.1 api.internal"},{"type":"file_not_contains","path":"etc/hosts.override","value":"192.0.2.44"}]},
+  "hints":["Compare the override with dns-evidence.txt.","Local hosts mappings can override DNS results.","Edit only the workspace-local etc/hosts.override file."],
+  "translations":{"ja":{"title":"誤ったhost mapping","description":"Workspace内のhosts overrideがapi.internalを古いaddressへ向けています。","mission":"DNS evidenceを使ってetc/hosts.overrideを127.0.0.1へ修正してください。","success":"host overrideを正しいaddressへ修正しました。","lesson":{"what_happened":"local host overrideが期待するservice addressより優先されていました。","other_solutions":["通常DNSが使えるなら古いoverrideを削除"],"be_careful":"systemの/etc/hostsは一切変更しないSceneです。"}}}
+}

@@ -1,0 +1,12 @@
+{
+  "id":"disk-large-files", "title":"Largest File", "category":"linux", "difficulty":"normal",
+  "description":"A workspace is unexpectedly large. One nested file is the main cause.",
+  "mission":"Find the largest file and write its relative path into answer.txt.",
+  "success":"You identified the largest file.",
+  "solution":["find . -type f -exec du -h {} + | sort -h", "find . -type f -size +1M"],
+  "lesson":{"what_happened":"Recursive file-size inspection isolated the file consuming most space.","other_solutions":["find with du","find with -size"],"be_careful":"Sparse files and apparent size can differ from allocated disk usage."},
+  "setup":{"type":"filesystem","files":[{"path":"answer.txt"},{"path":"app/log.txt","size":131072},{"path":"backups/old/database.dump","size":7340032},{"path":"cache/index.bin","size":1048576}]},
+  "validation":{"type":"file_contains","path":"answer.txt","value":"backups/old/database.dump"},
+  "hints":["Search files recursively and compare sizes.","find can execute du for every file.","Sort human-readable sizes with sort -h."],
+  "translations":{"ja":{"title":"最大fileの特定","description":"Workspace容量を大きくしているnested fileがあります。","mission":"最大のfileを探し、relative pathをanswer.txtへ書いてください。","success":"最大容量のfileを特定できました。","lesson":{"what_happened":"recursiveな容量調査で主原因のfileを絞り込みました。","other_solutions":["findとdu","find -size"],"be_careful":"見かけのsizeと実際のdisk使用量は異なる場合があります。"}}}
+}

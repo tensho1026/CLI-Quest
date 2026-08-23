@@ -6,6 +6,8 @@
   "description": "$ ./deploy.sh\npermission denied",
   "mission": "Make deploy.sh executable. Do not change what the script does.",
   "success": "deploy.sh is now executable.",
+  "solution": ["chmod +x deploy.sh", "chmod u+x deploy.sh"],
+  "lesson": {"what_happened":"The file content was valid, but no executable permission bit was set.","other_solutions":["chmod +x deploy.sh","chmod u+x deploy.sh"],"be_careful":"chmod 777 grants unnecessary access and is rarely the right fix."},
   "setup": {
     "type": "filesystem",
     "files": [
@@ -17,5 +19,6 @@
     "Inspect the permissions of deploy.sh.",
     "The long form of ls displays permission bits: ls -l deploy.sh",
     "chmod can add the executable bit. Try researching: chmod +x"
-  ]
+  ],
+  "translations":{"ja":{"title":"Permission Denied","description":"$ ./deploy.sh\npermission denied","mission":"deploy.shの内容を変えず実行可能にしてください。","success":"deploy.shに実行権限が付きました。","solution":["chmod +x deploy.sh","chmod u+x deploy.sh"],"hints":["deploy.shのpermissionを確認してください。","ls -l deploy.shでpermission bitを確認できます。","chmod +xを調べてみましょう。"],"lesson":{"what_happened":"file内容は正常でしたが実行permission bitがありませんでした。","other_solutions":["chmod +x deploy.sh","chmod u+x deploy.sh"],"be_careful":"chmod 777は不要な権限まで与えるため通常は避けます。"}}}
 }

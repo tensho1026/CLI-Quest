@@ -113,3 +113,65 @@ func TestResetRestoresInitialFilesystem(t *testing.T) {
 		t.Fatalf("reset did not reset hint index: %#v", data.Active)
 	}
 }
+
+func TestListFiltersAndJSON(t *testing.T) {
+	app, out, errOut, _ := newTestApp(t)
+	if code := app.Run([]string{"--json", "list", "--category", "git", "--difficulty", "hard"}); code != 0 {
+		t.Fatalf("list returned %d: %s", code, errOut.String())
+	}
+	if !strings.Contains(out.String(), `"id": "git-bisect"`) || strings.Contains(out.String(), `"id": "linux-permission"`) {
+		t.Fatalf("unexpected filtered JSON: %s", out.String())
+	}
+}
+
+func TestInteractiveDifficultyAndCategorySelection(t *testing.T) {
+	home := filepath.Join(t.TempDir(), "home")
+	t.Setenv("CLIQUEST_HOME", home)
+	out, errOut := &bytes.Buffer{}, &bytes.Buffer{}
+	// Categories are sorted: Git, HTTP, Incident, Linux. Linux easy has one scene.
+	app, err := NewWithInput(strings.NewReader("4\n1\n"), out, errOut)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := app.Run([]string{"start"}); code != 0 {
+		t.Fatalf("start returned %d: %s", code, errOut.String())
+	}
+	store, _ := progress.New()
+	data, _ := store.Load()
+	if data.Active == nil || data.Active.SceneID != "linux-permission" {
+		t.Fatalf("unexpected selected scene: %#v\n%s", data.Active, out.String())
+	}
+}
+
+func TestCancelRemovesWorkspaceAndRecordsHistory(t *testing.T) {
+	app, _, errOut, home := newTestApp(t)
+	if code := app.Run([]string{"start", "linux-permission"}); code != 0 {
+		t.Fatalf("start: %s", errOut.String())
+	}
+	workspacePath := filepath.Join(home, "workspaces", "linux-permission")
+	if code := app.Run([]string{"cancel"}); code != 0 {
+		t.Fatalf("cancel: %s", errOut.String())
+	}
+	if _, err := os.Stat(workspacePath); !os.IsNotExist(err) {
+		t.Fatalf("workspace still exists: %v", err)
+	}
+	store, _ := progress.New()
+	data, _ := store.Load()
+	if data.Active != nil || len(data.History) != 1 || data.History[0].Result != "cancelled" {
+		t.Fatalf("unexpected progress: %#v", data)
+	}
+}
+
+func TestLanguageConfigurationPersists(t *testing.T) {
+	app, out, errOut, _ := newTestApp(t)
+	if code := app.Run([]string{"config", "language", "ja"}); code != 0 {
+		t.Fatalf("config: %s", errOut.String())
+	}
+	out.Reset()
+	if code := app.Run([]string{"start", "linux-permission"}); code != 0 {
+		t.Fatalf("start: %s", errOut.String())
+	}
+	if !strings.Contains(out.String(), "deploy.shの内容を変えず") {
+		t.Fatalf("Japanese scene text missing: %s", out.String())
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "id":"permissions-owner", "title":"Overexposed Secret", "category":"linux", "difficulty":"normal",
+  "description":"secret.env is owned by the current user but is readable and writable by everyone.",
+  "mission":"Restrict secret.env so only its owner can read and write it (mode 0600).",
+  "success":"The secret file is restricted to its owner.",
+  "solution":["chmod 600 secret.env", "chmod u=rw,go= secret.env"],
+  "lesson":{"what_happened":"Group and other permission bits exposed a sensitive file.","other_solutions":["Numeric mode 600","Symbolic mode u=rw,go="],"be_careful":"Changing ownership usually requires elevated privileges; fix only what the mission requires."},
+  "setup":{"type":"filesystem","files":[{"path":"secret.env","mode":438,"content":"API_KEY=training-only-value\n"}]},
+  "validation":{"type":"file_mode","path":"secret.env","value":"0600"},
+  "hints":["Inspect ownership and all permission bits with ls -l.","The owner needs rw; group and others need no access.","The numeric mode is 600."],
+  "translations":{"ja":{"title":"公開されすぎたsecret","description":"secret.envが全userから読み書き可能になっています。","mission":"ownerだけが読み書きできるmode 0600へ制限してください。","success":"secret fileをownerだけに制限できました。","lesson":{"what_happened":"groupとotherのpermissionによりsensitive fileが公開されていました。","other_solutions":["chmod 600","chmod u=rw,go="],"be_careful":"ownership変更は通常権限が必要です。Missionに必要な範囲だけ直しましょう。"}}}
+}

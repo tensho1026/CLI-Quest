@@ -6,6 +6,8 @@
   "description": "The API failed during the night. The useful request ID is hidden among ordinary log entries.",
   "mission": "Find the request_id on the ERROR line and write only that ID into answer.txt.",
   "success": "You extracted the failing request ID from the log.",
+  "solution":["grep ERROR logs/api.log", "awk '$3 == \"ERROR\" { print }' logs/api.log"],
+  "lesson":{"what_happened":"Filtering by severity isolated the failed request from routine traffic.","other_solutions":["grep ERROR","awk by severity field"],"be_careful":"Preserve request IDs so related logs can be correlated across services."},
   "setup": {
     "type": "filesystem",
     "files": [
@@ -18,5 +20,6 @@
     "Look for lines at the ERROR severity.",
     "grep prints lines matching a text pattern.",
     "Try searching the log with: grep ERROR logs/api.log"
-  ]
+  ],
+  "translations":{"ja":{"title":"Production Log調査","description":"API failureのrequest IDが通常logの中に隠れています。","mission":"ERROR行のrequest_idだけをanswer.txtへ書いてください。","success":"失敗request IDを抽出しました。","hints":["ERROR severityの行を探します。","grepはpatternに一致する行を表示します。","grep ERROR logs/api.logを試してください。"],"lesson":{"what_happened":"severityでfilterして通常trafficから失敗requestを分離しました。","other_solutions":["grep ERROR","awkでseverity列を指定"],"be_careful":"service横断調査のためrequest IDを保持しましょう。"}}}
 }

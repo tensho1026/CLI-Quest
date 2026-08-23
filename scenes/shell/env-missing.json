@@ -1,0 +1,15 @@
+{
+  "id":"env-missing", "title":"Missing Environment", "category":"shell", "difficulty":"easy",
+  "description":"./run.sh fails with: APP_ENV is not configured.",
+  "mission":"Create the .env file expected by the application and configure APP_ENV for production.",
+  "success":"The required environment configuration is present.",
+  "solution":["printf 'APP_ENV=production\\n' > .env"],
+  "lesson":{"what_happened":"The application depended on configuration that was absent from its environment file.","other_solutions":["Create .env from the provided example"],"be_careful":"Do not commit real secrets in .env files."},
+  "setup":{"type":"filesystem","files":[
+    {"path":"run.sh","mode":448,"content":"#!/bin/sh\n[ -f .env ] || { echo 'APP_ENV is not configured' >&2; exit 1; }\n. ./.env\n[ \"$APP_ENV\" = production ] || { echo 'APP_ENV must be production' >&2; exit 1; }\necho 'server ready'\n"},
+    {"path":".env.example","content":"APP_ENV=development\n"}
+  ]},
+  "validation":{"type":"file_contains","path":".env","value":"APP_ENV=production"},
+  "hints":["Inspect run.sh and hidden files.","The application expects a file named .env.","Copy the example, then set APP_ENV=production."],
+  "translations":{"ja":{"title":"不足した環境変数","description":"./run.shがAPP_ENV is not configuredで失敗します。","mission":"applicationが期待する.envを作成し、APP_ENVをproductionに設定してください。","success":"必要な環境設定が用意されました。","lesson":{"what_happened":"applicationが依存する環境設定fileがありませんでした。","other_solutions":[".env.exampleから.envを作る"],"be_careful":"本物のsecretを.envごとcommitしないでください。"}}}
+}

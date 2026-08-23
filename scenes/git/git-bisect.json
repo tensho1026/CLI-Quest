@@ -1,0 +1,12 @@
+{
+  "id":"git-bisect", "title":"Find the Regression", "category":"git", "difficulty":"hard",
+  "description":"The latest version contains BUG_TRIGGER=true. Version 2 was known good, and the current HEAD is bad.",
+  "mission":"Use Git history or git bisect to find the first bad commit and write its full hash into answer.txt.",
+  "success":"You identified the commit that introduced the regression.",
+  "solution":["git log --oneline -- app.env", "git bisect start; git bisect bad; git bisect good HEAD~3"],
+  "lesson":{"what_happened":"Binary search through history isolated the first commit containing the regression.","other_solutions":["git bisect","Inspect every diff in a small history"],"be_careful":"Reset the bisect session with git bisect reset when finished."},
+  "setup":{"type":"git_bisect"},
+  "validation":{"type":"git_bisect_answer","path":"answer.txt"},
+  "hints":["Inspect the app.env history and diffs.","git bisect needs a known bad and known good revision.","The first bad commit is the one that first adds BUG_TRIGGER=true."],
+  "translations":{"ja":{"title":"Regressionの特定","description":"最新版にはBUG_TRIGGER=trueがあります。Version 2は正常でHEADは異常です。","mission":"Git historyまたはgit bisectで最初のbad commitを探しfull hashをanswer.txtへ書いてください。","success":"regressionを導入したcommitを特定しました。","lesson":{"what_happened":"historyをbinary searchして最初の異常commitを絞りました。","other_solutions":["git bisect","小さなhistoryなら各diffを確認"],"be_careful":"完了後はgit bisect resetでsessionを戻しましょう。"}}}
+}

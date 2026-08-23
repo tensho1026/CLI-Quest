@@ -1,0 +1,12 @@
+{
+  "id":"process-log", "title":"Startup Log Triage", "category":"process", "difficulty":"hard",
+  "description":"An API startup failed. The startup log contains the cause, and the conflicting CLI Quest process is still running.",
+  "mission":"Identify the root cause in logs/startup.log, write it into answer.txt, and free TCP port 18083.",
+  "success":"You connected the log evidence to the running process and freed the port.",
+  "solution":["grep ERROR logs/startup.log", "lsof -nP -iTCP:18083 -sTCP:LISTEN", "kill <confirmed-cliquest-pid>"],
+  "lesson":{"what_happened":"The log identified a bind failure, then process inspection found the port owner.","other_solutions":["lsof","ss plus ps on Linux"],"be_careful":"Confirm process ownership before sending a signal."},
+  "setup":{"type":"port_conflict","port":18083,"files":[{"path":"answer.txt"},{"path":"logs/startup.log","content":"INFO loading configuration\nINFO connecting database\nERROR listen tcp :18083: bind: address already in use\nFATAL API startup aborted\n"}]},
+  "validation":{"type":"all","validators":[{"type":"file_contains","path":"answer.txt","value":"address already in use"},{"type":"port_available"}]},
+  "hints":["Search the startup log for ERROR or FATAL.","The error names the port that failed to bind.","Find the listener on 18083, verify it is the CLI Quest helper, and stop it."],
+  "translations":{"ja":{"title":"起動logの切り分け","description":"API起動失敗の原因がlogにあり、競合processが動いています。","mission":"logs/startup.logから原因をanswer.txtへ書き、TCP port 18083を解放してください。","success":"logとprocessを結びつけてportを解放しました。","lesson":{"what_happened":"logからbind failureを特定し、process調査でport ownerを見つけました。","other_solutions":["lsof","Linuxのssとps"],"be_careful":"signal送信前にprocess ownerを確認しましょう。"}}}
+}

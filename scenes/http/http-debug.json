@@ -1,0 +1,12 @@
+{
+  "id":"http-debug", "title":"Follow the Redirect", "category":"http", "difficulty":"normal",
+  "description":"GET http://127.0.0.1:18084/legacy does not return the expected API body.",
+  "mission":"Inspect the status and headers, follow the server's destination, and successfully request the current API endpoint.",
+  "success":"You followed the redirect to the current endpoint.",
+  "solution":["curl -i http://127.0.0.1:18084/legacy", "curl -L http://127.0.0.1:18084/legacy"],
+  "lesson":{"what_happened":"The legacy endpoint returned a redirect through its Location header.","other_solutions":["Request /v2 directly","Use curl -L"],"be_careful":"Redirects can change host; inspect destinations before forwarding credentials."},
+  "setup":{"type":"http_server","port":18084,"mode":"debug"},
+  "validation":{"type":"marker_exists","path":".debug-followed"},
+  "hints":["Include response headers in curl output.","Look at the status code and Location header.","curl -L follows redirects."],
+  "translations":{"ja":{"title":"Redirect調査","description":"GET /legacyが期待するAPI bodyを返しません。","mission":"statusとheaderを調査し、移動先の現在のAPI endpointへrequestしてください。","success":"redirect先のendpointへ到達しました。","lesson":{"what_happened":"legacy endpointはLocation headerでredirectを返していました。","other_solutions":["/v2へ直接request","curl -L"],"be_careful":"credentialを転送する前にredirect先hostを確認しましょう。"}}}
+}
