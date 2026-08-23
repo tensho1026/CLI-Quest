@@ -1,0 +1,25 @@
+{
+  "id": "linux-find-file",
+  "title": "Configuration Hunt",
+  "category": "linux",
+  "difficulty": "normal",
+  "description": "A production service is failing, but its configuration file is buried somewhere in this archive.",
+  "mission": "Find config.production.toml and write its relative path into answer.txt.",
+  "success": "You found the production configuration file.",
+  "setup": {
+    "type": "filesystem",
+    "files": [
+      {"path": "answer.txt", "content": ""},
+      {"path": "archive/2022/legacy/config.dev.toml", "content": "environment = \"development\"\n"},
+      {"path": "archive/2023/services/web/config.test.toml", "content": "environment = \"test\"\n"},
+      {"path": "archive/2024/services/payment/config.production.toml", "content": "environment = \"production\"\nregion = \"ap-northeast-1\"\n"},
+      {"path": "archive/2024/services/search/README.md", "content": "Search service notes.\n"}
+    ]
+  },
+  "validation": {"type": "file_contains", "path": "answer.txt", "value": "archive/2024/services/payment/config.production.toml"},
+  "hints": [
+    "Search recursively rather than opening every directory.",
+    "find accepts a starting directory and a name pattern.",
+    "A useful form is: find . -name 'config.production.toml'"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "linux-disk-usage",
+  "title": "Disk Space Mystery",
+  "category": "linux",
+  "difficulty": "normal",
+  "description": "One application directory is consuming much more disk space than the others.",
+  "mission": "Identify the largest top-level directory and write its name into answer.txt.",
+  "success": "You identified cache as the largest directory.",
+  "setup": {
+    "type": "filesystem",
+    "files": [
+      {"path": "answer.txt", "content": ""},
+      {"path": "logs/app.log", "content": "recent application logs\n", "size": 131072},
+      {"path": "uploads/avatar.bin", "size": 524288},
+      {"path": "cache/build-cache.bin", "size": 5242880},
+      {"path": "data/index.bin", "size": 1048576}
+    ]
+  },
+  "validation": {"type": "file_contains", "path": "answer.txt", "value": "cache"},
+  "hints": [
+    "Compare directory sizes from the workspace root.",
+    "du summarizes disk usage; -h makes sizes easier to read.",
+    "Try: du -sh */"
+  ]
+}

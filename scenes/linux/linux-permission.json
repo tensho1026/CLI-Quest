@@ -1,0 +1,21 @@
+{
+  "id": "linux-permission",
+  "title": "Permission Denied",
+  "category": "linux",
+  "difficulty": "easy",
+  "description": "$ ./deploy.sh\npermission denied",
+  "mission": "Make deploy.sh executable. Do not change what the script does.",
+  "success": "deploy.sh is now executable.",
+  "setup": {
+    "type": "filesystem",
+    "files": [
+      {"path": "deploy.sh", "content": "#!/bin/sh\nprintf 'Deployment ready.\\n'\n", "mode": 420}
+    ]
+  },
+  "validation": {"type": "executable", "path": "deploy.sh"},
+  "hints": [
+    "Inspect the permissions of deploy.sh.",
+    "The long form of ls displays permission bits: ls -l deploy.sh",
+    "chmod can add the executable bit. Try researching: chmod +x"
+  ]
+}

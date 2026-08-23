@@ -1,0 +1,24 @@
+{
+  "id": "http-auth",
+  "title": "Authenticated Request",
+  "category": "http",
+  "difficulty": "normal",
+  "description": "GET http://127.0.0.1:18081/profile returns 401 Unauthorized without credentials.",
+  "mission": "Read the provided credentials and make a successful request to /profile with the required Authorization header.",
+  "success": "The API accepted an authenticated profile request.",
+  "setup": {
+    "type": "http_server",
+    "port": 18081,
+    "mode": "auth",
+    "files": [
+      {"path": "credentials.txt", "content": "scheme=Bearer\ntoken=cliquest-secret\n"},
+      {"path": "README.txt", "content": "Profile URL: http://127.0.0.1:18081/profile\nThe API expects an Authorization header.\n"}
+    ]
+  },
+  "validation": {"type": "marker_exists", "path": ".auth-succeeded"},
+  "hints": [
+    "Inspect credentials.txt and include both the scheme and token.",
+    "curl uses -H to add a request header.",
+    "The header format is: Authorization: Bearer <token>"
+  ]
+}

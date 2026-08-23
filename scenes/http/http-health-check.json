@@ -1,0 +1,21 @@
+{
+  "id": "http-health-check",
+  "title": "API Health Check",
+  "category": "http",
+  "difficulty": "easy",
+  "description": "A local API is running at http://127.0.0.1:18080, but its status is unknown.",
+  "mission": "Send a GET request to /health and confirm that the API reports a healthy status.",
+  "success": "The health endpoint was queried successfully.",
+  "setup": {
+    "type": "http_server",
+    "port": 18080,
+    "mode": "health",
+    "files": [{"path": "README.txt", "content": "Base URL: http://127.0.0.1:18080\nHealth path: /health\n"}]
+  },
+  "validation": {"type": "marker_exists", "path": ".health-checked"},
+  "hints": [
+    "The endpoint accepts an HTTP GET request.",
+    "curl can print an HTTP response in the terminal.",
+    "Try: curl http://127.0.0.1:18080/health"
+  ]
+}

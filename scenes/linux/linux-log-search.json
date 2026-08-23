@@ -1,0 +1,22 @@
+{
+  "id": "linux-log-search",
+  "title": "Production Log Investigation",
+  "category": "linux",
+  "difficulty": "normal",
+  "description": "The API failed during the night. The useful request ID is hidden among ordinary log entries.",
+  "mission": "Find the request_id on the ERROR line and write only that ID into answer.txt.",
+  "success": "You extracted the failing request ID from the log.",
+  "setup": {
+    "type": "filesystem",
+    "files": [
+      {"path": "answer.txt", "content": ""},
+      {"path": "logs/api.log", "content": "2026-08-22T02:10:01Z INFO request completed request_id=req-17a2 status=200\n2026-08-22T02:10:04Z INFO request completed request_id=req-32bb status=200\n2026-08-22T02:11:19Z WARN upstream slow request_id=req-81d0 duration_ms=2800\n2026-08-22T02:11:22Z INFO request completed request_id=req-81d0 status=200\n2026-08-22T02:14:55Z ERROR database timeout request_id=req-9f42 status=500\n2026-08-22T02:15:02Z INFO request completed request_id=req-aa10 status=200\n2026-08-22T02:16:41Z INFO request completed request_id=req-b714 status=200\n"}
+    ]
+  },
+  "validation": {"type": "file_contains", "path": "answer.txt", "value": "req-9f42"},
+  "hints": [
+    "Look for lines at the ERROR severity.",
+    "grep prints lines matching a text pattern.",
+    "Try searching the log with: grep ERROR logs/api.log"
+  ]
+}

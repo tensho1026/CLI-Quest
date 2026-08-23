@@ -1,0 +1,16 @@
+{
+  "id": "git-restore-file",
+  "title": "Restore One File",
+  "category": "git",
+  "difficulty": "easy",
+  "description": "config.ini has accidental local edits. Other workspace files must be left alone.",
+  "mission": "Restore only config.ini to the version recorded in HEAD.",
+  "success": "config.ini matches the committed production configuration again.",
+  "setup": {"type": "git_restore_file"},
+  "validation": {"type": "git_clean", "path": "config.ini"},
+  "hints": [
+    "Use git status and git diff to inspect the local change.",
+    "Git can restore one path without resetting the whole repository.",
+    "Research: git restore config.ini"
+  ]
+}

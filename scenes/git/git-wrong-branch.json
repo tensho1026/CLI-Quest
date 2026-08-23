@@ -1,0 +1,16 @@
+{
+  "id": "git-wrong-branch",
+  "title": "Committed on Main",
+  "category": "git",
+  "difficulty": "normal",
+  "description": "An authentication feature was committed directly on main by mistake.",
+  "mission": "Move the authentication commit onto a feature/* branch and restore main to its original commit. Keep the feature change in Git history.",
+  "success": "main is restored and the change is safely reachable from a feature branch.",
+  "setup": {"type": "git_wrong_branch"},
+  "validation": {"type": "git_wrong_branch"},
+  "hints": [
+    "Inspect the graph and branch pointers with git log and git branch.",
+    "Create the feature branch while the mistaken commit is still checked out.",
+    "After preserving the commit on feature/auth, switch to main and move main back one commit."
+  ]
+}

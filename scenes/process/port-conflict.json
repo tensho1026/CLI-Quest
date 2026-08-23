@@ -1,0 +1,23 @@
+{
+  "id": "port-conflict",
+  "title": "Port Conflict",
+  "category": "process",
+  "difficulty": "easy",
+  "description": "$ ./api\nlisten tcp 127.0.0.1:8080: bind: address already in use",
+  "mission": "Identify the CLI Quest process listening on TCP port 8080 and stop it so the port becomes available.",
+  "success": "Port 8080 is available.",
+  "setup": {
+    "type": "port_conflict",
+    "port": 8080,
+    "files": [
+      {"path": "api", "content": "#!/bin/sh\nexec {{CLIQUEST}} __hold-port \"$(pwd)\" manual 8080\n", "mode": 448},
+      {"path": "README.txt", "content": "The API needs TCP port 8080. Do not kill unrelated system processes.\n"}
+    ]
+  },
+  "validation": {"type": "port_available"},
+  "hints": [
+    "Find which process is listening on TCP port 8080.",
+    "On macOS and many Linux systems, lsof -iTCP:8080 -sTCP:LISTEN shows the PID.",
+    "Inspect the PID, confirm it is the cliquest helper, then terminate that PID with kill."
+  ]
+}

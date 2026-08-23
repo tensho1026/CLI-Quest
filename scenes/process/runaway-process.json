@@ -1,0 +1,21 @@
+{
+  "id": "runaway-process",
+  "title": "Runaway Process",
+  "category": "process",
+  "difficulty": "normal",
+  "description": "A CLI Quest worker is repeatedly consuming CPU in the background.",
+  "mission": "Use process inspection tools to find the worker associated with this workspace and terminate it.",
+  "success": "The runaway worker has stopped.",
+  "setup": {
+    "type": "runaway_process",
+    "files": [
+      {"path": "README.txt", "content": "The runaway worker command includes both '__runaway' and this workspace path.\n"}
+    ]
+  },
+  "validation": {"type": "process_stopped"},
+  "hints": [
+    "Inspect running processes and their CPU usage.",
+    "ps aux can show both the command and CPU column. Look for __runaway.",
+    "Confirm the process command contains this workspace path before using kill on its PID."
+  ]
+}

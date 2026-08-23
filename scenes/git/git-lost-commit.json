@@ -1,0 +1,16 @@
+{
+  "id": "git-lost-commit",
+  "title": "The Lost Commit",
+  "category": "git",
+  "difficulty": "hard",
+  "description": "An important commit containing recovery-note.txt disappeared after a reset.",
+  "mission": "Find the lost commit and make it reachable from a branch or the current branch again.",
+  "success": "The recovery note is present in reachable Git history again.",
+  "setup": {"type": "git_lost_commit"},
+  "validation": {"type": "git_commit_contains", "path": "recovery-note.txt", "value": "CLIQUEST_RECOVERED_7F3A"},
+  "hints": [
+    "Git often retains a record of recent HEAD movements.",
+    "Inspect the reflog to find the commit before the reset.",
+    "Create a branch at the recovered commit, or cherry-pick that commit onto main."
+  ]
+}
