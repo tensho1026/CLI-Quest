@@ -2,6 +2,7 @@ package validator
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -63,5 +64,42 @@ func TestGitValidatorRejectsSymlinkedWorkspaceRoot(t *testing.T) {
 	result := Check(def, &progress.ActiveScene{SceneID: "git-safe", Workspace: link})
 	if result.Clear || !strings.Contains(result.Message, "unsafe") {
 		t.Fatalf("unexpected result: %#v", result)
+	}
+}
+
+func TestGitCommitContainsReadsReachableHistory(t *testing.T) {
+	workspace := t.TempDir()
+	notePath := "recovery note.txt"
+	runGitTestCommand(t, workspace, "init", "-b", "main")
+	runGitTestCommand(t, workspace, "config", "user.name", "CLI Quest Test")
+	runGitTestCommand(t, workspace, "config", "user.email", "cliquest-test@example.invalid")
+	if err := os.WriteFile(filepath.Join(workspace, notePath), []byte("CLIQUEST_RECOVERED_TEST\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGitTestCommand(t, workspace, "add", notePath)
+	runGitTestCommand(t, workspace, "commit", "-m", "add recovery note")
+	if err := os.Remove(filepath.Join(workspace, notePath)); err != nil {
+		t.Fatal(err)
+	}
+	runGitTestCommand(t, workspace, "add", "-A")
+	runGitTestCommand(t, workspace, "commit", "-m", "remove recovery note")
+
+	def := scene.Definition{
+		ID:         "git-recovery",
+		Success:    "recovered",
+		Validation: scene.Validation{Type: "git_commit_contains", Path: notePath, Value: "CLIQUEST_RECOVERED_TEST"},
+	}
+	result := Check(def, &progress.ActiveScene{SceneID: def.ID, Workspace: workspace})
+	if !result.Clear {
+		t.Fatalf("reachable history should clear: %#v", result)
+	}
+}
+
+func runGitTestCommand(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	command := exec.Command("git", args...)
+	command.Dir = dir
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, output)
 	}
 }

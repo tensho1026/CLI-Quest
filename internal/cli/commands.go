@@ -45,7 +45,7 @@ func (a *App) cancel() error {
 }
 
 func (a *App) cleanup() error {
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (a *App) cleanup() error {
 }
 
 func (a *App) openWorkspace() error {
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (a *App) openWorkspace() error {
 
 func (a *App) solution() error {
 	var def scene.Definition
-	err := a.store.Update(func(data *progress.Data) error {
+	err := a.store.UpdateState(func(data *progress.Data) error {
 		if data.Active == nil {
 			return fmt.Errorf("no active scene")
 		}
@@ -167,7 +167,11 @@ type statsGroup struct {
 }
 
 func (a *App) stats() error {
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
+	if err != nil {
+		return err
+	}
+	streak, err := a.store.Streak(time.Now())
 	if err != nil {
 		return err
 	}
@@ -195,11 +199,11 @@ func (a *App) stats() error {
 			difficulties[def.Difficulty].XP += item.TotalXP
 		}
 	}
-	result := map[string]any{"total_xp": data.TotalXP, "streak_days": progress.Streak(data, time.Now()), "completed": len(data.Completed), "total_scenes": len(a.catalog.All()), "categories": categories, "difficulties": difficulties}
+	result := map[string]any{"total_xp": data.TotalXP, "streak_days": streak, "completed": len(data.Completed), "total_scenes": len(a.catalog.All()), "categories": categories, "difficulties": difficulties}
 	if a.jsonOutput {
 		return a.writeJSON(result)
 	}
-	fmt.Fprintf(a.out, "CLI QUEST STATS\n%s\n\nXP: %d\n%s: %d %s\n%s: %d / %d\n\n%s\n", rule, data.TotalXP, a.text("Streak", "連続学習"), progress.Streak(data, time.Now()), a.text("day(s)", "日"), a.text("Progress", "進捗"), len(data.Completed), len(a.catalog.All()), a.text("Categories", "分野"))
+	fmt.Fprintf(a.out, "CLI QUEST STATS\n%s\n\nXP: %d\n%s: %d %s\n%s: %d / %d\n\n%s\n", rule, data.TotalXP, a.text("Streak", "連続学習"), streak, a.text("day(s)", "日"), a.text("Progress", "進捗"), len(data.Completed), len(a.catalog.All()), a.text("Categories", "分野"))
 	printStatsGroups(a.out, categories)
 	fmt.Fprintf(a.out, "\n%s\n", a.text("Difficulties", "難易度"))
 	printStatsGroups(a.out, difficulties)
@@ -227,7 +231,7 @@ func formatDuration(seconds int64) string {
 
 func (a *App) config(args []string) error {
 	if len(args) == 0 {
-		data, err := a.store.Load()
+		data, err := a.store.LoadState()
 		if err != nil {
 			return err
 		}
@@ -241,7 +245,7 @@ func (a *App) config(args []string) error {
 		return fmt.Errorf("usage: cliquest config language <en|ja>")
 	}
 	language := strings.ToLower(args[1])
-	if err := a.store.Update(func(data *progress.Data) error { data.Settings.Language = language; return nil }); err != nil {
+	if err := a.store.UpdateState(func(data *progress.Data) error { data.Settings.Language = language; return nil }); err != nil {
 		return err
 	}
 	a.language = language

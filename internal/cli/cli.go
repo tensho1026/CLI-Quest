@@ -163,7 +163,12 @@ func (a *App) Run(args []string) int {
 }
 
 func (a *App) home() int {
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
+	if err != nil {
+		fmt.Fprintf(a.errOut, "Error: %v\n", err)
+		return 1
+	}
+	streak, err := a.store.Streak(time.Now())
 	if err != nil {
 		fmt.Fprintf(a.errOut, "Error: %v\n", err)
 		return 1
@@ -174,7 +179,7 @@ func (a *App) home() int {
 		if data.Active != nil {
 			active = data.Active.SceneID
 		}
-		if err := a.writeJSON(map[string]any{"completed": len(data.Completed), "total": len(all), "total_xp": data.TotalXP, "streak_days": progress.Streak(data, time.Now()), "active_scene": active}); err != nil {
+		if err := a.writeJSON(map[string]any{"completed": len(data.Completed), "total": len(all), "total_xp": data.TotalXP, "streak_days": streak, "active_scene": active}); err != nil {
 			fmt.Fprintf(a.errOut, "Error: %v\n", err)
 			return 1
 		}
@@ -198,7 +203,7 @@ func (a *App) home() int {
 			fmt.Fprintf(a.out, "  %-12s %d / %d\n", category, c.completed, c.total)
 		}
 	}
-	fmt.Fprintf(a.out, "\nXP: %d    %s: %d %s\n", data.TotalXP, a.text("Streak", "連続学習"), progress.Streak(data, time.Now()), a.text("day(s)", "日"))
+	fmt.Fprintf(a.out, "\nXP: %d    %s: %d %s\n", data.TotalXP, a.text("Streak", "連続学習"), streak, a.text("day(s)", "日"))
 	fmt.Fprintf(a.out, "\n%s\n\n  cliquest list\n  cliquest start\n  cliquest next\n  cliquest status\n\n%s\n", a.text("Commands", "コマンド"), rule)
 	return 0
 }
@@ -280,7 +285,7 @@ func (a *App) list(args []string) error {
 	if len(positional) != 0 {
 		return fmt.Errorf("usage: cliquest list [filters]")
 	}
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
 	if err != nil {
 		return err
 	}
@@ -509,7 +514,7 @@ func (a *App) reset() error {
 }
 
 func (a *App) status() error {
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
 	if err != nil {
 		return err
 	}

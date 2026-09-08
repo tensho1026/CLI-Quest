@@ -1,8 +1,12 @@
 package progress
 
 import (
+	"bytes"
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -36,6 +40,120 @@ func TestStoreRoundTrip(t *testing.T) {
 	want.Settings.Language = "en"
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("round trip mismatch\ngot:  %#v\nwant: %#v", got, want)
+	}
+}
+
+func TestHistoryJournalRoundTripAndAppend(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "state")
+	t.Setenv("CLIQUEST_HOME", root)
+	store, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := HistoryEntry{SceneID: "first", Result: "clear", EndedAt: time.Date(2026, 8, 23, 10, 0, 0, 0, time.UTC)}
+	second := HistoryEntry{SceneID: "second", Result: "cancelled", EndedAt: time.Date(2026, 8, 24, 10, 0, 0, 0, time.UTC)}
+	if err := store.Save(Data{History: []HistoryEntry{first}}); err != nil {
+		t.Fatal(err)
+	}
+	progressData, err := os.ReadFile(store.path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(progressData), `"history"`) {
+		t.Fatal("progress metadata unexpectedly contains history")
+	}
+	historyData, err := os.ReadFile(store.historyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := bytes.Count(historyData, []byte("\n")); got != 1 {
+		t.Fatalf("history journal has %d records, want 1", got)
+	}
+	if err := store.Update(func(data *Data) error {
+		data.History = append(data.History, second)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	historyData, err = os.ReadFile(store.historyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := bytes.Count(historyData, []byte("\n")); got != 2 {
+		t.Fatalf("history journal has %d records, want 2", got)
+	}
+	got, err := store.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.History) != 2 || got.History[0].SceneID != first.SceneID || got.History[1].SceneID != second.SceneID {
+		t.Fatalf("unexpected history: %#v", got.History)
+	}
+}
+
+func TestLoadStateSkipsHistoryJournal(t *testing.T) {
+	t.Setenv("CLIQUEST_HOME", filepath.Join(t.TempDir(), "state"))
+	store, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	entry := HistoryEntry{SceneID: "scene", Result: "clear", EndedAt: time.Now()}
+	if err := store.Save(Data{History: []HistoryEntry{entry}}); err != nil {
+		t.Fatal(err)
+	}
+	state, err := store.LoadState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.History != nil {
+		t.Fatalf("LoadState decoded history: %#v", state.History)
+	}
+	full, err := store.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(full.History) != 1 || full.History[0].SceneID != entry.SceneID {
+		t.Fatalf("Load did not restore history: %#v", full.History)
+	}
+}
+
+func TestLegacyInlineHistoryMigratesOnStateUpdate(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "state")
+	t.Setenv("CLIQUEST_HOME", root)
+	store, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	entry := HistoryEntry{SceneID: "legacy", Result: "clear", EndedAt: time.Now()}
+	legacy, err := json.Marshal(Data{History: []HistoryEntry{entry}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(store.path, legacy, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpdateState(func(data *Data) error {
+		data.TotalXP = 10
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.History) != 1 || got.History[0].SceneID != entry.SceneID || got.TotalXP != 10 {
+		t.Fatalf("legacy history was not preserved: %#v", got)
+	}
+	progressData, err := os.ReadFile(store.path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(progressData), `"history"`) {
+		t.Fatal("legacy history was not removed from progress metadata")
 	}
 }
 

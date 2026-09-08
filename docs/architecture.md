@@ -48,7 +48,9 @@ File ValidatorはWorkspace rootとtargetのsymlinkを解決し、resolved path�
 
 ### `internal/progress`
 
-進捗は単一の`progress.json`です。`progress.lock`へUnix advisory lockを取り、read-modify-write transaction中のlost updateを防ぎます。一時fileへ書いてcloseした後にrenameするatomic saveも併用します。modeは0600、状態directoryは0700です。
+進捗metadataは`progress.json`、挑戦履歴はappend-onlyの`history.jsonl`へ分離します。Hintや設定変更のように履歴を変更しない操作では、履歴journalをdecodeせず、進捗metadataだけをatomic saveします。Clear/cancel時は新しい履歴entryだけをjournalへappendするため、過去の履歴全体を再encodeしません。
+
+`progress.lock`へUnix advisory lockを取り、metadataとhistory journalのread-modify-write transaction中のlost updateを防ぎます。一時fileへ書いてcloseした後にrenameするatomic saveも併用します。modeは0600、状態directoryは0700です。Version 0.1/0.2のように`progress.json`へhistoryがinline保存されたデータは読み込み可能で、次回のstate update時にjournalへ移行します。
 
 Version 0.1の`completed`と`active`だけのJSONもそのままdecodeし、missing mapやlanguageへdefaultを設定します。v0.2ではattempt、Clear/cancel history、duration、Hint、XP、best time、settingsを追加しています。
 

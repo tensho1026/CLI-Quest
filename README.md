@@ -285,11 +285,12 @@ ps -p <PID> -o pid,ppid,%cpu,command
 ~/.cliquest/
 ├── progress.json
 ├── progress.lock
+├── history.jsonl
 └── workspaces/
     └── <scene-id>/
 ```
 
-`progress.json`にはActive Scene、Clear一覧、attempt statistics、history、XP、languageを保存します。`progress.lock`のUnix file lockとatomic renameにより、同時実行時のlost updateと途中書込みを防ぎます。
+`progress.json`にはActive Scene、Clear一覧、attempt statistics、XP、languageを保存します。挑戦履歴は`history.jsonl`へ分離して1行1entryで追記するため、Hintや設定変更のたびに過去の履歴全体を書き直しません。既存の`progress.json`にinline保存されたhistoryも読み込み可能で、state更新時に自動移行します。`progress.lock`のUnix file lockとatomic renameにより、同時実行時のlost updateと途中書込みを防ぎます。
 
 保存先を分離する場合:
 

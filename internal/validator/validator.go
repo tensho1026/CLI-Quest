@@ -1,8 +1,10 @@
 package validator
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -229,13 +231,107 @@ func checkReachableGitContent(def scene.Definition, active *progress.ActiveScene
 	if err != nil {
 		return Result{Message: "Could not inspect reachable commits."}
 	}
-	for _, commit := range strings.Fields(commits) {
-		content, err := gitOutput(active.Workspace, "show", commit+":"+def.Validation.Path)
-		if err == nil && strings.Contains(content, def.Validation.Value) {
-			return Result{Clear: true, Message: def.Success}
-		}
+	found, err := batchContains(active.Workspace, strings.Fields(commits), def.Validation.Path, def.Validation.Value)
+	if err != nil {
+		return Result{Message: "Could not inspect reachable Git content."}
+	}
+	if found {
+		return Result{Clear: true, Message: def.Success}
 	}
 	return Result{Message: "The lost file is not present in any reachable commit yet."}
+}
+
+func batchContains(dir string, commits []string, path, value string) (bool, error) {
+	if len(commits) == 0 {
+		return false, nil
+	}
+	if err := safeWorkspaceRoot(dir); err != nil {
+		return false, err
+	}
+	command := exec.Command("git", "cat-file", "--batch")
+	command.Dir = dir
+	input, err := command.StdinPipe()
+	if err != nil {
+		return false, err
+	}
+	output, err := command.StdoutPipe()
+	if err != nil {
+		return false, err
+	}
+	if err := command.Start(); err != nil {
+		return false, err
+	}
+	writeDone := make(chan error, 1)
+	go func() {
+		for _, commit := range commits {
+			if _, err := fmt.Fprintf(input, "%s:%s\n", commit, path); err != nil {
+				writeDone <- err
+				return
+			}
+		}
+		writeDone <- input.Close()
+	}()
+
+	reader := bufio.NewReader(output)
+	found := false
+	for range commits {
+		header, err := reader.ReadString('\n')
+		if err != nil {
+			_ = command.Process.Kill()
+			_ = command.Wait()
+			<-writeDone
+			return false, err
+		}
+		trimmedHeader := strings.TrimSpace(header)
+		if strings.HasSuffix(trimmedHeader, " missing") {
+			continue
+		}
+		fields := strings.Fields(trimmedHeader)
+		if len(fields) != 3 {
+			_ = command.Process.Kill()
+			_ = command.Wait()
+			<-writeDone
+			return false, fmt.Errorf("unexpected git cat-file response %q", strings.TrimSpace(header))
+		}
+		size, err := strconv.ParseInt(fields[2], 10, 64)
+		if err != nil || size < 0 {
+			_ = command.Process.Kill()
+			_ = command.Wait()
+			<-writeDone
+			return false, fmt.Errorf("invalid git object size %q", fields[2])
+		}
+		content, err := io.ReadAll(io.LimitReader(reader, size))
+		if err != nil || int64(len(content)) != size {
+			_ = command.Process.Kill()
+			_ = command.Wait()
+			<-writeDone
+			if err == nil {
+				err = io.ErrUnexpectedEOF
+			}
+			return false, err
+		}
+		separator, err := reader.ReadByte()
+		if err != nil || separator != '\n' {
+			_ = command.Process.Kill()
+			_ = command.Wait()
+			<-writeDone
+			if err == nil {
+				err = fmt.Errorf("git cat-file response is missing separator")
+			}
+			return false, err
+		}
+		if fields[1] == "blob" && bytes.Contains(content, []byte(value)) {
+			found = true
+		}
+	}
+	if err := <-writeDone; err != nil {
+		_ = command.Wait()
+		return false, err
+	}
+	if err := command.Wait(); err != nil {
+		return false, err
+	}
+	return found, nil
 }
 
 func gitOutput(dir string, args ...string) (string, error) {
