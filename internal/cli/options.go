@@ -21,7 +21,7 @@ type filters struct {
 }
 
 func (a *App) applyGlobalOptions(args []string) ([]string, error) {
-	if data, err := a.store.Load(); err == nil && data.Settings.Language != "" {
+	if data, err := a.store.LoadState(); err == nil && data.Settings.Language != "" {
 		a.language = data.Settings.Language
 	}
 	var rest []string
@@ -126,7 +126,7 @@ func (a *App) startCommand(args []string) error {
 	if len(positional) == 1 {
 		return a.startScene(positional[0])
 	}
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (a *App) next(args []string) error {
 	if len(positional) != 0 {
 		return fmt.Errorf("usage: cliquest next [filters]")
 	}
-	data, err := a.store.Load()
+	data, err := a.store.LoadState()
 	if err != nil {
 		return err
 	}
